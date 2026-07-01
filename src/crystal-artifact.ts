@@ -220,12 +220,16 @@ export async function renderCrystalArtifactSvg(artifact: CrystalArtifactV0, defe
     ? `<g id="fracture" stroke="#111111" stroke-width="6.0000" fill="none"><path d="M180.0000 360.0000 L320.0000 520.0000 L250.0000 700.0000 L410.0000 860.0000 L360.0000 1030.0000" /><path d="M215.0000 350.0000 L345.0000 500.0000 L285.0000 690.0000 L438.0000 845.0000 L398.0000 1012.0000" /></g>`
     : ""
 
+  const qrViewBoxMatch = qrSvg.match(/viewBox="([^"]+)"/)
+  const qrViewBox = qrViewBoxMatch ? qrViewBoxMatch[1]! : "0 0 420 420"
   const qrInner = qrSvg.replace(/<svg[^>]*>|<\/svg>/g, "")
   const qrPanelX = 330
   const qrPanelY = 1035
   const qrPanelSize = 540
-  const qrTranslateX = qrPanelX + 60
-  const qrTranslateY = qrPanelY + 60
+  const qrInset = 20
+  const qrRenderSize = qrPanelSize - qrInset * 2
+  const qrTranslateX = qrPanelX + qrInset
+  const qrTranslateY = qrPanelY + qrInset
 
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
@@ -243,7 +247,7 @@ export async function renderCrystalArtifactSvg(artifact: CrystalArtifactV0, defe
     `<g id="mutation-legend" font-family="monospace" fill="#0f172a">${artifact.mutations.map((mutation, index) => `<text x="80.0000" y="${f(925 + index * 28)}" font-size="15.0000">${index + 1}. ${mutation.type} → ${mutation.source_ref}</text>`).join("")}</g>`,
     `<g id="qr-panel">`,
     `<rect x="${f(qrPanelX)}" y="${f(qrPanelY)}" width="${f(qrPanelSize)}" height="${f(qrPanelSize)}" rx="24.0000" fill="#ffffff" stroke="#cbd5e1" stroke-width="3.0000" />`,
-    `<g id="qr" transform="translate(${f(qrTranslateX)},${f(qrTranslateY)})">${qrInner}</g>`,
+    `<svg id="qr" x="${f(qrTranslateX)}" y="${f(qrTranslateY)}" width="${f(qrRenderSize)}" height="${f(qrRenderSize)}" viewBox="${qrViewBox}">${qrInner}</svg>`,
     `</g>`,
     `<text x="600.0000" y="1020.0000" text-anchor="middle" font-family="monospace" font-size="22.0000" fill="#0f172a">Scan for offline verification</text>`,
     `<text x="600.0000" y="1592.0000" text-anchor="middle" font-family="monospace" font-size="16.0000" fill="#475569">Tier-1 envelope only; full history lives in crystal_artifact.v0.json</text>`,
