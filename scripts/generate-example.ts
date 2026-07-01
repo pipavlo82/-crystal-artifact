@@ -1,8 +1,9 @@
-import { mkdirSync, writeFileSync } from "node:fs"
+import { mkdirSync, writeFileSync, readFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { Resvg } from "@resvg/resvg-js"
+import { PNG } from "pngjs"
 import { canonicalize } from "../src/canon"
-import { buildCrystalArtifactFromFiles, decodeQrPayloadFromArtifactSvg, renderQrSvg, renderSvgScreenshot, verifyCrystalQrEnvelope } from "../src/crystal-artifact"
+import { buildCrystalArtifactFromFiles, decodeQrPayloadFromArtifactSvg, renderQrSvg, renderSvgScreenshot, renderCrystalArtifactSvg, verifyCrystalQrEnvelope } from "../src/crystal-artifact"
 
 const outDir = resolve("examples/output")
 mkdirSync(outDir, { recursive: true })
@@ -13,10 +14,28 @@ const built = await buildCrystalArtifactFromFiles({
   chroniclePortfolio: "examples/inputs/chronicle-portfolio-v0.json",
 })
 
+const darkSvg = await renderCrystalArtifactSvg(built.artifact, built.defects, built.qrPayload, "dark")
+const lightSvg = await renderCrystalArtifactSvg(built.artifact, built.defects, built.qrPayload, "light")
+
 writeFileSync(resolve(outDir, "crystal_artifact.v0.json"), JSON.stringify(built.artifact, null, 2) + "\n")
-writeFileSync(resolve(outDir, "crystal_artifact.svg"), built.svg)
-await renderSvgScreenshot(built.svg, resolve(outDir, "crystal_artifact.png"))
-const qrPayload = await decodeQrPayloadFromArtifactSvg(built.svg)
+writeFileSync(resolve(outDir, "crystal_artifact.svg"), darkSvg)
+writeFileSync(resolve(outDir, "crystal_artifact.light.svg"), lightSvg)
+await renderSvgScreenshot(darkSvg, resolve(outDir, "crystal_artifact.png"))
+await renderSvgScreenshot(lightSvg, resolve(outDir, "crystal_artifact.light.png"))
+
+const darkPng = PNG.sync.read(readFileSync(resolve(outDir, "crystal_artifact.png")))
+for (let i = 0; i < darkPng.data.length; i += 4) {
+  const r = darkPng.data[i] ?? 0
+  const g = darkPng.data[i + 1] ?? 0
+  const b = darkPng.data[i + 2] ?? 0
+  const gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b)
+  darkPng.data[i] = gray
+  darkPng.data[i + 1] = gray
+  darkPng.data[i + 2] = gray
+}
+writeFileSync(resolve(outDir, "crystal_artifact.grayscale.png"), PNG.sync.write(darkPng))
+
+const qrPayload = await decodeQrPayloadFromArtifactSvg(darkSvg)
 const verification = verifyCrystalQrEnvelope(JSON.parse(qrPayload))
 writeFileSync(resolve(outDir, "qr-roundtrip.json"), JSON.stringify({ qrPayload, qrEnvelope: built.qrEnvelope, verification }, null, 2) + "\n")
 
@@ -24,12 +43,7 @@ const fullArtifactQrSvg = await renderQrSvg(canonicalize(built.artifact))
 const envelopeQrSvg = await renderQrSvg(built.qrPayload)
 const comparisonSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520"><rect width="900" height="520" fill="#ffffff" /><text x="60" y="50" font-family="monospace" font-size="24">Before: full artifact QR</text><text x="500" y="50" font-family="monospace" font-size="24">After: Tier-1 envelope QR</text><g transform="translate(60,80)">${fullArtifactQrSvg.replace(/<svg[^>]*>|<\/svg>/g, "")}</g><g transform="translate(500,80)">${envelopeQrSvg.replace(/<svg[^>]*>|<\/svg>/g, "")}</g><text x="60" y="460" font-family="monospace" font-size="18">payload chars: ${canonicalize(built.artifact).length}</text><text x="500" y="460" font-family="monospace" font-size="18">payload chars: ${built.qrPayload.length}</text></svg>`
 writeFileSync(resolve(outDir, "qr-density-comparison.svg"), comparisonSvg)
-const comparisonPng = new Resvg(comparisonSvg).render().asPng()
-writeFileSync(resolve(outDir, "qr-density-comparison.png"), comparisonPng)
+writeFileSync(resolve(outDir, "qr-density-comparison.png"), new Resvg(comparisonSvg).render().asPng())
 writeFileSync(resolve(outDir, "qr-density-comparison.json"), JSON.stringify({ before_chars: canonicalize(built.artifact).length, after_chars: built.qrPayload.length }, null, 2) + "\n")
 
-console.log(JSON.stringify({
-  crystal_hash: built.artifact.crystal_hash,
-  qr_roundtrip_ok: verification.ok,
-  output_dir: outDir,
-}, null, 2))
+console.log(JSON.stringify({ crystal_hash: built.artifact.crystal_hash, qr_roundtrip_ok: verification.ok, output_dir: outDir }, null, 2))

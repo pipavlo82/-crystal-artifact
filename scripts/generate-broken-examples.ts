@@ -18,19 +18,19 @@ const chronicleEntry = JSON.parse(await Bun.file(basePaths.chronicleEntry).text(
 const chroniclePortfolio = JSON.parse(await Bun.file(basePaths.chroniclePortfolio).text()) as ChroniclePortfolioV0
 
 const scenarios: Record<string, { artifact: CrystalArtifactV0; inputs: CrystalBuildInput }> = {
-  "hash_mismatch": {
+  hash_mismatch: {
     artifact: { ...clean.artifact, crystal_hash: `sha256:${"0".repeat(64)}` },
     inputs: { portableProofObject, chronicleEntry, chroniclePortfolio },
   },
-  "broken_chain": {
+  broken_chain: {
     artifact: { ...clean.artifact, mutations: [clean.artifact.mutations[0]!, clean.artifact.mutations[2]!, clean.artifact.mutations[1]!, clean.artifact.mutations[3]!, clean.artifact.mutations[4]!] },
     inputs: { portableProofObject, chronicleEntry, chroniclePortfolio },
   },
-  "root_inconsistency": {
+  root_inconsistency: {
     artifact: clean.artifact,
     inputs: { portableProofObject, chronicleEntry: { ...chronicleEntry, receipt_root: `0x${"f".repeat(64)}` }, chroniclePortfolio },
   },
-  "incomplete_history": {
+  incomplete_history: {
     artifact: { ...clean.artifact, mutation_count: 4 },
     inputs: { portableProofObject, chronicleEntry, chroniclePortfolio },
   },
@@ -40,8 +40,8 @@ for (const [name, scenario] of Object.entries(scenarios)) {
   const outDir = resolve("examples/broken", name)
   mkdirSync(outDir, { recursive: true })
   const defects = detectDefects(scenario.artifact, scenario.inputs)
-  const svg = await renderCrystalArtifactSvg(scenario.artifact, defects)
-  await renderSvgScreenshot(svg, resolve(outDir, "crystal_artifact.png"))
+  const darkSvg = await renderCrystalArtifactSvg(scenario.artifact, defects, undefined, "dark")
+  await renderSvgScreenshot(darkSvg, resolve(outDir, "crystal_artifact.png"))
   writeFileSync(resolve(outDir, "crystal_artifact.v0.json"), JSON.stringify(scenario.artifact, null, 2) + "\n")
   writeFileSync(resolve(outDir, "defects.json"), JSON.stringify({ defects, verification: verifyCrystalArtifact(scenario.artifact) }, null, 2) + "\n")
   writeFileSync(resolve(outDir, "input.json"), JSON.stringify(scenario.inputs, null, 2) + "\n")
