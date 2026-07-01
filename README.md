@@ -72,7 +72,7 @@ This hash deliberately excludes the SVG, timestamps, color, and visual parameter
 
 Tier 1 is paper alone, offline: scan the QR, parse the minimal verification envelope, recompute `crystal_hash` from `{ crystal_version, receipt_root, mutation_hashes }`, and check that it matches the embedded value.
 
-This is a role correction, not just a size optimization: the QR is the paper integrity check, not the full history container. The full history remains in the file.
+This is a role correction, not just a size optimization: the QR is the paper integrity check, not the full history container. The full history remains in the file. The rendered QR now includes the required quiet zone and larger modules so the final full-page artifact image is scannable by a real camera, not only by an in-memory test harness.
 
 Tier 2 uses the surrounding proof chain: open the full `crystal_artifact.v0.json`, recover the full mutations and `source_ref` values, and check them against real ReceiptOS and Chronicle outputs.
 
