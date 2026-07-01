@@ -176,9 +176,9 @@ function layerPath(cx: number, cy: number, baseRadius: number, hash: string, lay
 export async function renderQrSvg(payload: string) {
   const raw = await QRCode.toString(payload, {
     type: "svg",
-    errorCorrectionLevel: "H",
-    margin: 0,
-    width: 220,
+    errorCorrectionLevel: "M",
+    margin: 4,
+    width: 320,
     color: { dark: "#111111", light: "#ffffff" },
   })
 
