@@ -178,7 +178,7 @@ export async function renderQrSvg(payload: string) {
     type: "svg",
     errorCorrectionLevel: "M",
     margin: 4,
-    width: 320,
+    width: 420,
     color: { dark: "#111111", light: "#ffffff" },
   })
 
