@@ -1,0 +1,19 @@
+{
+  "name": "crystal-artifact",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "bun test",
+    "generate:example": "bun scripts/generate-example.ts",
+    "check:no-source-imports": "bun scripts/check-no-source-imports.ts"
+  },
+  "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "dijkstrajs": "^1.0.3",
+    "jsqr": "^1.4.0",
+    "pngjs": "^7.0.0",
+    "qrcode": "^1.5.4",
+    "typescript": "^5.9.2"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "schema": "receiptos.portable_proof_object.v0",
+  "proof_object_id": "proofobj-687dc5c00d9241469138bb1c17a06af1b8713b0f84663b55e11d476f4171a6bc",
+  "proof_system": "ReceiptOS",
+  "receipt_root": "0x687dc5c00d9241469138bb1c17a06af1b8713b0f84663b55e11d476f4171a6bc",
+  "proof_ref": "receiptos://portable-proof-object/proofobj-687dc5c00d9241469138bb1c17a06af1b8713b0f84663b55e11d476f4171a6bc",
+  "replay_ref": "receiptos://replay/session-demo-001",
+  "anchor_ref": null,
+  "source_evidence_ref": "fixture://session-evidence.sample.json"
+}

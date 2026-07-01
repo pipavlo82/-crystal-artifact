@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Crystal Artifact v0</title>
+  <style>
+    body { font-family: Inter, Arial, sans-serif; margin: 0; background: #f8fafc; color: #0f172a; }
+    main { max-width: 1200px; margin: 0 auto; padding: 24px; display: grid; gap: 20px; }
+    .card { background: white; border: 1px solid #cbd5e1; border-radius: 16px; padding: 18px; box-shadow: 0 8px 24px rgba(15,23,42,.08); }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; }
+    button { border: 1px solid #94a3b8; background: #0f172a; color: white; border-radius: 12px; padding: 10px 14px; cursor: pointer; font-weight: 700; }
+    input[type=file] { display: block; margin-top: 8px; }
+    #preview svg { width: 100%; height: auto; border-radius: 12px; background: white; }
+    code { word-break: break-all; }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="card">
+      <h1>Crystal Artifact</h1>
+      <p>Load exported JSON chain files from disk, then generate a deterministic bismuth-style proof artifact.</p>
+      <div class="row">
+        <label>portable_proof_object.v0<input id="proof" type="file" accept="application/json,.json" /></label>
+        <label>chronicle_entry.v0<input id="entry" type="file" accept="application/json,.json" /></label>
+        <label>chronicle_portfolio.v0<input id="portfolio" type="file" accept="application/json,.json" /></label>
+      </div>
+    </section>
+    <section class="card">
+      <div class="row">
+        <button id="generate">Generate Crystal</button>
+        <button id="exportSvg">Export SVG</button>
+        <button id="exportJson">Export crystal_artifact.v0</button>
+        <button id="copyHash">Copy crystal_hash</button>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Crystal Artifact</h2>
+      <p>mutation count: <span id="mutationCount">0</span></p>
+      <p>crystal_hash: <code id="crystalHash">n/a</code></p>
+      <div id="preview"></div>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+  <script type="module" src="./ui.js"></script>
+</body>
+</html>

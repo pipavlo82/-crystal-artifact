@@ -1,0 +1,12 @@
+{
+  "schema": "chronicle_entry.v0",
+  "entry_id": "entry-proofobj-687dc5c00d9241469138bb1c17a06af1b8713b0f84663b55e11d476f4171a6bc",
+  "source_system": "ReceiptOS",
+  "receipt_root": "0x687dc5c00d9241469138bb1c17a06af1b8713b0f84663b55e11d476f4171a6bc",
+  "proof_object_ref": "receiptos://portable-proof-object/proofobj-687dc5c00d9241469138bb1c17a06af1b8713b0f84663b55e11d476f4171a6bc",
+  "evidence_capsule_ref": "receiptos://evidence-capsule/proofobj-687dc5c00d9241469138bb1c17a06af1b8713b0f84663b55e11d476f4171a6bc",
+  "provenance_summary_ref": "receiptos://provenance-summary/proofobj-687dc5c00d9241469138bb1c17a06af1b8713b0f84663b55e11d476f4171a6bc",
+  "created_from": "fixture://session-evidence.sample.json",
+  "labels": ["workspace", "sample"],
+  "notes": null
+}

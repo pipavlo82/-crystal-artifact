@@ -1,0 +1,10 @@
+{
+  "schema": "chronicle_portfolio.v0",
+  "portfolio_version": "chronicle_portfolio.v0",
+  "portfolio_id": "workspace",
+  "collection_refs": [
+    "/collection/collection-alpha",
+    "/collection/collection-beta"
+  ],
+  "portfolio_root": "sha256:7ddd55f59ea424fda079e3b5d5a3a1497bffe460ef1339ecbbc350888bc48124"
+}
