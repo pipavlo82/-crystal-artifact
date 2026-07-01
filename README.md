@@ -8,6 +8,38 @@ Crystal Artifact is a deterministic bismuth-style visual artifact that encodes a
 
 5 mutations = 5 layers; the QR carries the artifact for offline verification.
 
+## Broken-state examples
+
+A clean crystal is whole, symmetric, and closed. A broken crystal must look broken even in black-and-white print, using only defects that can be recomputed from the input JSON alone.
+
+### Clean reference
+
+![Clean crystal reference](examples/broken/clean-reference.png)
+
+### Hash mismatch — visible fracture
+
+![Hash mismatch crystal](examples/broken/hash_mismatch/crystal_artifact.png)
+
+A stored `crystal_hash` that does not match the recomputed value creates a visible fracture across the form.
+
+### Broken chain — ruptured outer layer
+
+![Broken chain crystal](examples/broken/broken_chain/crystal_artifact.png)
+
+A missing, duplicated, or out-of-order mutation sequence opens the outer growth layer instead of closing it cleanly.
+
+### Root inconsistency — offset inner core
+
+![Root inconsistency crystal](examples/broken/root_inconsistency/crystal_artifact.png)
+
+If the input chain contradicts itself about `receipt_root`, the inner core sits visibly off-center.
+
+### Incomplete history — unfinished shell
+
+![Incomplete history crystal](examples/broken/incomplete_history/crystal_artifact.png)
+
+If the chain stops before `portfolio_verified`, the outer shell remains visibly incomplete.
+
 ## The chain it encodes
 
 The current example follows this chain:
@@ -52,4 +84,5 @@ This repository is an isolated experiment. It does not import `crystal-receipt` 
 bun install
 bun test
 bun run scripts/generate-example.ts
+bun scripts/generate-broken-examples.ts
 ```
