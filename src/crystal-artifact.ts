@@ -220,6 +220,13 @@ export async function renderCrystalArtifactSvg(artifact: CrystalArtifactV0, defe
     ? `<g id="fracture" stroke="#111111" stroke-width="6.0000" fill="none"><path d="M180.0000 360.0000 L320.0000 520.0000 L250.0000 700.0000 L410.0000 860.0000 L360.0000 1030.0000" /><path d="M215.0000 350.0000 L345.0000 500.0000 L285.0000 690.0000 L438.0000 845.0000 L398.0000 1012.0000" /></g>`
     : ""
 
+  const qrInner = qrSvg.replace(/<svg[^>]*>|<\/svg>/g, "")
+  const qrPanelX = 330
+  const qrPanelY = 1035
+  const qrPanelSize = 540
+  const qrTranslateX = qrPanelX + 60
+  const qrTranslateY = qrPanelY + 60
+
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
     `<rect x="0" y="0" width="${width}" height="${height}" fill="#f8fafc" />`,
@@ -233,9 +240,13 @@ export async function renderCrystalArtifactSvg(artifact: CrystalArtifactV0, defe
     `<text x="80.0000" y="218.0000" font-size="18.0000">portfolio_root: ${artifact.portfolio_root}</text>`,
     `<text x="80.0000" y="250.0000" font-size="18.0000">crystal_hash: ${artifact.crystal_hash}</text>`,
     `</g>`,
-    `<g id="mutation-legend" font-family="monospace" fill="#0f172a">${artifact.mutations.map((mutation, index) => `<text x="80.0000" y="${f(1030 + index * 36)}" font-size="16.0000">${index + 1}. ${mutation.type} → ${mutation.source_ref}</text>`).join("")}</g>`,
-    `<g id="qr" transform="translate(830,1180)">${qrSvg.replace(/<svg[^>]*>|<\/svg>/g, "")}</g>`,
-    `<text x="830.0000" y="1160.0000" font-family="monospace" font-size="18.0000" fill="#0f172a">scan to verify offline</text>`,
+    `<g id="mutation-legend" font-family="monospace" fill="#0f172a">${artifact.mutations.map((mutation, index) => `<text x="80.0000" y="${f(925 + index * 28)}" font-size="15.0000">${index + 1}. ${mutation.type} → ${mutation.source_ref}</text>`).join("")}</g>`,
+    `<g id="qr-panel">`,
+    `<rect x="${f(qrPanelX)}" y="${f(qrPanelY)}" width="${f(qrPanelSize)}" height="${f(qrPanelSize)}" rx="24.0000" fill="#ffffff" stroke="#cbd5e1" stroke-width="3.0000" />`,
+    `<g id="qr" transform="translate(${f(qrTranslateX)},${f(qrTranslateY)})">${qrInner}</g>`,
+    `</g>`,
+    `<text x="600.0000" y="1020.0000" text-anchor="middle" font-family="monospace" font-size="22.0000" fill="#0f172a">Scan for offline verification</text>`,
+    `<text x="600.0000" y="1592.0000" text-anchor="middle" font-family="monospace" font-size="16.0000" fill="#475569">Tier-1 envelope only; full history lives in crystal_artifact.v0.json</text>`,
     `</svg>`,
   ].join("")
 }
