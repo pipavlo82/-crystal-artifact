@@ -1,0 +1,13 @@
+{
+  "defects": [
+    {
+      "type": "incomplete_history",
+      "detail": "chain stops at portfolio_created before portfolio_verified"
+    }
+  ],
+  "verification": {
+    "ok": true,
+    "crystal_hash": "sha256:74350a81c792a943aa75e577b3ea721aa98af01f488780f7c7f77b0149d36f6f",
+    "recomputed_crystal_hash": "sha256:74350a81c792a943aa75e577b3ea721aa98af01f488780f7c7f77b0149d36f6f"
+  }
+}

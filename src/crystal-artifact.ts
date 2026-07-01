@@ -10,6 +10,7 @@ import type {
   ChroniclePortfolioV0,
   CrystalArtifactV0,
   CrystalBuildInput,
+  CrystalDefect,
   CrystalMutation,
   CrystalMutationType,
   PortableProofObjectV0,
@@ -64,6 +65,62 @@ export function verifyCrystalArtifact(artifact: CrystalArtifactV0) {
   }
 }
 
+const CANONICAL_MUTATION_ORDER: CrystalMutationType[] = [
+  "evidence_imported",
+  "receipt_verified",
+  "chronicle_entry_created",
+  "portfolio_created",
+  "portfolio_verified",
+]
+
+export function detectDefects(
+  artifact: CrystalArtifactV0,
+  inputs: Pick<CrystalBuildInput, "portableProofObject" | "chronicleEntry" | "chroniclePortfolio">,
+): CrystalDefect[] {
+  const defects: CrystalDefect[] = []
+  const verification = verifyCrystalArtifact(artifact)
+  if (!verification.ok) {
+    defects.push({
+      type: "hash_mismatch",
+      detail: `stored ${artifact.crystal_hash} != recomputed ${verification.recomputed_crystal_hash}`,
+    })
+  }
+
+  const activeMutations = artifact.mutations.slice(0, artifact.mutation_count)
+  const activeTypes = activeMutations.map((mutation) => mutation.type)
+  const expectedPrefix = CANONICAL_MUTATION_ORDER.slice(0, activeTypes.length)
+  const orderedPrefix = activeTypes.every((type, index) => type === expectedPrefix[index])
+  const uniqueTypes = new Set(activeTypes)
+
+  if (artifact.mutation_count < CANONICAL_MUTATION_ORDER.length) {
+    defects.push({
+      type: "incomplete_history",
+      detail: `chain stops at ${activeTypes.at(-1) ?? "none"} before portfolio_verified`,
+    })
+  }
+
+  if (!orderedPrefix || uniqueTypes.size !== activeTypes.length) {
+    defects.push({
+      type: "broken_chain",
+      detail: `observed sequence ${activeTypes.join(" -> ") || "(empty)"}`,
+    })
+  }
+
+  const portableReceiptRoot = inputs.portableProofObject.receipt_root
+  const rootRefs = [artifact.receipt_root, inputs.chronicleEntry.receipt_root]
+  const contradictoryMutation = activeMutations.find((mutation) => mutation.source_ref.startsWith("0x") && mutation.source_ref !== portableReceiptRoot)
+  if (rootRefs.some((root) => root !== portableReceiptRoot) || contradictoryMutation) {
+    defects.push({
+      type: "root_inconsistency",
+      detail: contradictoryMutation
+        ? `mutation source_ref ${contradictoryMutation.source_ref} != ${portableReceiptRoot}`
+        : `artifact/entry receipt_root != ${portableReceiptRoot}`,
+    })
+  }
+
+  return defects
+}
+
 function hashToUint32(seed: string, offset: number) {
   return Number.parseInt(seed.slice(offset, offset + 8), 16) >>> 0
 }
@@ -72,7 +129,7 @@ function f(n: number) {
   return n.toFixed(4)
 }
 
-function layerPath(cx: number, cy: number, baseRadius: number, hash: string, layerIndex: number) {
+function layerPath(cx: number, cy: number, baseRadius: number, hash: string, layerIndex: number, options?: { ruptured?: boolean }) {
   const sideSeed = hashToUint32(hash, (layerIndex * 8) % (hash.length - 8))
   const sides = 6 + (sideSeed % 5)
   const rotation = (hashToUint32(hash, (layerIndex * 10 + 4) % (hash.length - 8)) / 0xffffffff) * Math.PI * 2
@@ -80,7 +137,8 @@ function layerPath(cx: number, cy: number, baseRadius: number, hash: string, lay
   const radius = baseRadius + layerIndex * 18
   const points: string[] = []
 
-  for (let i = 0; i < sides; i += 1) {
+  const maxPoints = options?.ruptured ? sides - 1 : sides
+  for (let i = 0; i < maxPoints; i += 1) {
     const angle = rotation + (Math.PI * 2 * i) / sides
     const radialBias = 0.82 + (((hashToUint32(hash, (i * 4 + layerIndex * 3) % (hash.length - 8)) / 0xffffffff) * 0.34) * jitter)
     const x = cx + Math.cos(angle) * radius * radialBias
@@ -88,7 +146,7 @@ function layerPath(cx: number, cy: number, baseRadius: number, hash: string, lay
     points.push(`${i === 0 ? "M" : "L"}${f(x)} ${f(y)}`)
   }
 
-  return `${points.join(" ")} Z`
+  return options?.ruptured ? points.join(" ") : `${points.join(" ")} Z`
 }
 
 export async function renderQrSvg(payload: string) {
@@ -107,7 +165,7 @@ export async function renderQrSvg(payload: string) {
     .trim()
 }
 
-export async function renderCrystalArtifactSvg(artifact: CrystalArtifactV0) {
+export async function renderCrystalArtifactSvg(artifact: CrystalArtifactV0, defects: CrystalDefect[] = []) {
   const payload = canonicalize(artifact)
   const qrSvg = await renderQrSvg(payload)
   const hash = artifact.crystal_hash.replace(/^sha256:/, "")
@@ -116,19 +174,34 @@ export async function renderCrystalArtifactSvg(artifact: CrystalArtifactV0) {
   const height = 1600
   const cx = 420
   const cy = 620
+  const defectTypes = new Set(defects.map((defect) => defect.type))
+  const isBrokenChain = defectTypes.has("broken_chain")
+  const isIncomplete = defectTypes.has("incomplete_history")
+  const isHashMismatch = defectTypes.has("hash_mismatch")
+  const isRootInconsistent = defectTypes.has("root_inconsistency")
   const baseRadius = 120 + (hashToUint32(receiptSeed, 0) % 40)
   const layers = artifact.mutations.map((mutation, index) => {
-    const d = layerPath(cx, cy, baseRadius, mutation.mutation_hash.replace(/^sha256:/, ""), index)
+    const isOuterAffected = index >= Math.max(artifact.mutation_count - 1, 0)
+    const d = layerPath(cx, cy, baseRadius, mutation.mutation_hash.replace(/^sha256:/, ""), index, {
+      ruptured: (isBrokenChain || isIncomplete) && isOuterAffected,
+    })
     const hue = (hashToUint32(mutation.mutation_hash.replace(/^sha256:/, ""), 0) % 360)
     const opacity = 0.18 + index * 0.11
-    return `<path d="${d}" fill="hsla(${hue},70%,65%,${f(Math.min(opacity, 0.82))})" stroke="#0f172a" stroke-width="2.0000" />`
+    const fill = isBrokenChain || isIncomplete ? `hsla(0,0%,${f(55 + index * 5)},${f(Math.min(opacity, 0.82))})` : `hsla(${hue},70%,65%,${f(Math.min(opacity, 0.82))})`
+    return `<path d="${d}" fill="${fill}" stroke="#0f172a" stroke-width="2.0000" />`
   }).join("")
+  const coreOffsetX = isRootInconsistent ? 42 : 0
+  const coreOffsetY = isRootInconsistent ? -28 : 0
+  const crack = isHashMismatch
+    ? `<g id="fracture" stroke="#111111" stroke-width="6.0000" fill="none"><path d="M180.0000 360.0000 L320.0000 520.0000 L250.0000 700.0000 L410.0000 860.0000 L360.0000 1030.0000" /><path d="M215.0000 350.0000 L345.0000 500.0000 L285.0000 690.0000 L438.0000 845.0000 L398.0000 1012.0000" /></g>`
+    : ""
 
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
     `<rect x="0" y="0" width="${width}" height="${height}" fill="#f8fafc" />`,
     `<g id="crystal-layers">${layers}</g>`,
-    `<g id="receipt-seed"><circle cx="${f(cx)}" cy="${f(cy)}" r="${f(baseRadius * 0.42)}" fill="#e2e8f0" stroke="#0f172a" stroke-width="2.0000" /></g>`,
+    `${crack}`,
+    `<g id="receipt-seed"><circle cx="${f(cx + coreOffsetX)}" cy="${f(cy + coreOffsetY)}" r="${f(baseRadius * 0.42)}" fill="#e2e8f0" stroke="#0f172a" stroke-width="2.0000" /></g>`,
     `<g id="labels" font-family="monospace" fill="#0f172a">`,
     `<text x="80.0000" y="116.0000" font-size="34.0000">Crystal Artifact v0</text>`,
     `<text x="80.0000" y="154.0000" font-size="18.0000">mutation_count: ${artifact.mutation_count}</text>`,
@@ -173,6 +246,7 @@ export async function buildCrystalArtifactFromFiles(paths: {
   const chronicleEntry = readJsonFile<ChronicleEntryV0>(paths.chronicleEntry)
   const chroniclePortfolio = readJsonFile<ChroniclePortfolioV0>(paths.chroniclePortfolio)
   const artifact = buildCrystalArtifact({ portableProofObject, chronicleEntry, chroniclePortfolio })
-  const svg = await renderCrystalArtifactSvg(artifact)
-  return { artifact, svg, qrPayload: canonicalize(artifact) }
+  const defects = detectDefects(artifact, { portableProofObject, chronicleEntry, chroniclePortfolio })
+  const svg = await renderCrystalArtifactSvg(artifact, defects)
+  return { artifact, defects, svg, qrPayload: canonicalize(artifact) }
 }

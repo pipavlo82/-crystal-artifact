@@ -63,3 +63,14 @@ export type CrystalBuildInput = {
   chronicleEntry: ChronicleEntryV0
   chroniclePortfolio: ChroniclePortfolioV0
 }
+
+export type CrystalDefectType =
+  | "hash_mismatch"
+  | "broken_chain"
+  | "root_inconsistency"
+  | "incomplete_history"
+
+export type CrystalDefect = {
+  type: CrystalDefectType
+  detail: string
+}

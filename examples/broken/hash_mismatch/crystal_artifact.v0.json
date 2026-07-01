@@ -1,0 +1,34 @@
+{
+  "crystal_version": "crystal_artifact.v0",
+  "receipt_root": "0x687dc5c00d9241469138bb1c17a06af1b8713b0f84663b55e11d476f4171a6bc",
+  "portfolio_root": "sha256:7ddd55f59ea424fda079e3b5d5a3a1497bffe460ef1339ecbbc350888bc48124",
+  "mutation_count": 5,
+  "mutations": [
+    {
+      "type": "evidence_imported",
+      "source_ref": "workspace",
+      "mutation_hash": "sha256:8d659d8a46197c7e7d57d781e0353a6300d3f930dc67317f73ecd20a02c68f2b"
+    },
+    {
+      "type": "receipt_verified",
+      "source_ref": "workspace",
+      "mutation_hash": "sha256:f8cb68062fd5191557c1d74d80ebe8a214c015b65fac16589b119bbc42e9865e"
+    },
+    {
+      "type": "chronicle_entry_created",
+      "source_ref": "workspace",
+      "mutation_hash": "sha256:273c9c459f28814fee782048904aaff419072b332bf7095bffcbed149cc87ae1"
+    },
+    {
+      "type": "portfolio_created",
+      "source_ref": "workspace",
+      "mutation_hash": "sha256:f8c7bc6d4b4ee6c06a7651d550a4586f24c155d0ec3b8305430041819cf2ea1d"
+    },
+    {
+      "type": "portfolio_verified",
+      "source_ref": "workspace",
+      "mutation_hash": "sha256:1381efcd206cb16dbcb96df90291c4c108aa647dd14ae27e2d715b3a546e2fe4"
+    }
+  ],
+  "crystal_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+}
