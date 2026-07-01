@@ -10,8 +10,10 @@ import type {
   ChroniclePortfolioV0,
   CrystalArtifactV0,
   CrystalBuildInput,
+  CrystalBuildResult,
   CrystalDefect,
   CrystalMutation,
+  CrystalQrEnvelopeV0,
   CrystalMutationType,
   PortableProofObjectV0,
 } from "./types"
@@ -31,6 +33,28 @@ export function computeCrystalHash(input: Pick<CrystalArtifactV0, "crystal_versi
     receipt_root: input.receipt_root,
     mutation_hashes: mutationHashes,
   }))}`
+}
+
+export function createCrystalQrEnvelope(artifact: CrystalArtifactV0): CrystalQrEnvelopeV0 {
+  return {
+    crystal_version: artifact.crystal_version,
+    receipt_root: artifact.receipt_root,
+    mutation_hashes: [...artifact.mutations.map((mutation) => mutation.mutation_hash)].sort((a, b) => a.localeCompare(b)),
+    crystal_hash: artifact.crystal_hash,
+  }
+}
+
+export function verifyCrystalQrEnvelope(envelope: CrystalQrEnvelopeV0) {
+  const recomputed = `sha256:${sha256(canonicalize({
+    crystal_version: envelope.crystal_version,
+    receipt_root: envelope.receipt_root,
+    mutation_hashes: [...envelope.mutation_hashes].sort((a, b) => a.localeCompare(b)),
+  }))}`
+  return {
+    ok: recomputed === envelope.crystal_hash,
+    crystal_hash: envelope.crystal_hash,
+    recomputed_crystal_hash: recomputed,
+  }
 }
 
 export function buildCrystalArtifact(input: CrystalBuildInput): CrystalArtifactV0 {
@@ -165,8 +189,8 @@ export async function renderQrSvg(payload: string) {
     .trim()
 }
 
-export async function renderCrystalArtifactSvg(artifact: CrystalArtifactV0, defects: CrystalDefect[] = []) {
-  const payload = canonicalize(artifact)
+export async function renderCrystalArtifactSvg(artifact: CrystalArtifactV0, defects: CrystalDefect[] = [], qrPayload?: string) {
+  const payload = qrPayload ?? canonicalize(createCrystalQrEnvelope(artifact))
   const qrSvg = await renderQrSvg(payload)
   const hash = artifact.crystal_hash.replace(/^sha256:/, "")
   const receiptSeed = artifact.receipt_root.replace(/^0x/, "")
@@ -241,12 +265,14 @@ export async function buildCrystalArtifactFromFiles(paths: {
   portableProofObject: string
   chronicleEntry: string
   chroniclePortfolio: string
-}) {
+}): Promise<CrystalBuildResult> {
   const portableProofObject = readJsonFile<PortableProofObjectV0>(paths.portableProofObject)
   const chronicleEntry = readJsonFile<ChronicleEntryV0>(paths.chronicleEntry)
   const chroniclePortfolio = readJsonFile<ChroniclePortfolioV0>(paths.chroniclePortfolio)
   const artifact = buildCrystalArtifact({ portableProofObject, chronicleEntry, chroniclePortfolio })
   const defects = detectDefects(artifact, { portableProofObject, chronicleEntry, chroniclePortfolio })
-  const svg = await renderCrystalArtifactSvg(artifact, defects)
-  return { artifact, defects, svg, qrPayload: canonicalize(artifact) }
+  const qrEnvelope = createCrystalQrEnvelope(artifact)
+  const qrPayload = canonicalize(qrEnvelope)
+  const svg = await renderCrystalArtifactSvg(artifact, defects, qrPayload)
+  return { artifact, defects, svg, qrPayload, qrEnvelope }
 }

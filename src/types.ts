@@ -64,6 +64,21 @@ export type CrystalBuildInput = {
   chroniclePortfolio: ChroniclePortfolioV0
 }
 
+export type CrystalQrEnvelopeV0 = {
+  crystal_version: "crystal_artifact.v0"
+  receipt_root: string
+  mutation_hashes: string[]
+  crystal_hash: string
+}
+
+export type CrystalBuildResult = {
+  artifact: CrystalArtifactV0
+  defects: CrystalDefect[]
+  svg: string
+  qrPayload: string
+  qrEnvelope: CrystalQrEnvelopeV0
+}
+
 export type CrystalDefectType =
   | "hash_mismatch"
   | "broken_chain"

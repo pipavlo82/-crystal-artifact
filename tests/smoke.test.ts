@@ -3,12 +3,14 @@ import { canonicalize } from "../src/canon"
 import {
   buildCrystalArtifactFromFiles,
   computeCrystalHash,
+  createCrystalQrEnvelope,
   decodeQrPayloadFromArtifactSvg,
   detectDefects,
   renderCrystalArtifactSvg,
   verifyCrystalArtifact,
+  verifyCrystalQrEnvelope,
 } from "../src/crystal-artifact"
-import type { CrystalArtifactV0 } from "../src/types"
+import type { CrystalArtifactV0, CrystalQrEnvelopeV0 } from "../src/types"
 
 const inputPaths = {
   portableProofObject: "examples/inputs/portable-proof-object-v0.json",
@@ -26,13 +28,15 @@ describe("crystal artifact smoke", () => {
     expect(first.defects).toEqual([])
   })
 
-  test("qr round-trip recomputes crystal_hash", async () => {
+  test("qr round-trip recomputes crystal_hash from minimal envelope", async () => {
     const built = await buildCrystalArtifactFromFiles(inputPaths)
     const payload = await decodeQrPayloadFromArtifactSvg(built.svg)
-    const parsed = JSON.parse(payload) as CrystalArtifactV0
-    const verification = verifyCrystalArtifact(parsed)
+    const parsed = JSON.parse(payload) as CrystalQrEnvelopeV0
+    const verification = verifyCrystalQrEnvelope(parsed)
     expect(verification.ok).toBe(true)
     expect(verification.recomputed_crystal_hash).toBe(parsed.crystal_hash)
+    expect(parsed.crystal_hash).toBe("sha256:74350a81c792a943aa75e577b3ea721aa98af01f488780f7c7f77b0149d36f6f")
+    expect(parsed).toEqual(createCrystalQrEnvelope(built.artifact))
   })
 
   test("guard: fake svg / timestamp / color do not affect crystal_hash", async () => {
@@ -52,9 +56,10 @@ describe("crystal artifact smoke", () => {
     expect(svgAgain).toBe(built.svg)
   })
 
-  test("crystal artifact compact payload is canonical JSON", async () => {
+  test("crystal qr payload is canonical minimal envelope", async () => {
     const built = await buildCrystalArtifactFromFiles(inputPaths)
-    expect(built.qrPayload).toBe(canonicalize(built.artifact))
+    expect(built.qrPayload).toBe(canonicalize(built.qrEnvelope))
+    expect(Object.keys(built.qrEnvelope).sort()).toEqual(["crystal_hash", "crystal_version", "mutation_hashes", "receipt_root"])
   })
 
   test("detects hash_mismatch and crystal_hash recomputes unchanged", async () => {

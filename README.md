@@ -6,7 +6,7 @@ Crystal Artifact is a deterministic bismuth-style visual artifact that encodes a
 
 ![Crystal Artifact example](examples/output/crystal_artifact.png)
 
-5 mutations = 5 layers; the QR carries the artifact for offline verification.
+5 mutations = 5 layers; the QR carries the minimal Tier-1 verification envelope for offline verification.
 
 ## Broken-state examples
 
@@ -66,13 +66,13 @@ crystal_hash = sha256(canonicalize({
 }))
 ```
 
-This hash deliberately excludes the SVG, timestamps, color, and visual parameters. The picture is derived from the history, but the picture does not define the history. That means the same proof history always yields the same `crystal_hash`, and a scanned copy can be recomputed and checked with zero trust. The guard test enforces this by injecting fake SVG, timestamp, and color fields and asserting that the `crystal_hash` stays byte-identical.
+This hash deliberately excludes the SVG, timestamps, color, and visual parameters. The picture is derived from the history, but the picture does not define the history. That means the same proof history always yields the same `crystal_hash`, and a scanned copy can be recomputed and checked with zero trust. The guard test enforces this by injecting fake SVG, timestamp, and color fields and asserting that the `crystal_hash` stays byte-identical. The QR does not carry the full artifact anymore; it carries only the minimal Tier-1 envelope needed to recompute that same hash.
 
 ## Two-tier verification
 
-Tier 1 is paper alone, offline: scan the QR, parse the artifact JSON, recompute `crystal_hash`, and check that it matches the embedded value.
+Tier 1 is paper alone, offline: scan the QR, parse the minimal verification envelope, recompute `crystal_hash` from `{ crystal_version, receipt_root, mutation_hashes }`, and check that it matches the embedded value.
 
-Tier 2 uses the surrounding proof chain: check `receipt_root` and mutation `source_ref` values against real ReceiptOS and Chronicle outputs.
+Tier 2 uses the surrounding proof chain: open the full `crystal_artifact.v0.json`, recover the full mutations and `source_ref` values, and check them against real ReceiptOS and Chronicle outputs.
 
 ## Relationship to the ecosystem
 
