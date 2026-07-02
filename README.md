@@ -78,6 +78,8 @@ Tier 2 uses the surrounding proof chain: open the full `crystal_artifact.v0.json
 
 ## Relationship to the ecosystem
 
+Core formulations: see [Canonical Principles](docs/CANONICAL_PRINCIPLES.md).
+
 This repository is an isolated experiment. It does not import `crystal-receipt` source and is not part of the ReceiptOS or Chronicle proof path; those systems remain the source of truth. The crystal is a secondary, optional visual representation. Its `canonicalize` function is a verified copy, locked to `crystal-receipt` by the golden-vector test so it cannot silently drift.
 
 ## Run it
